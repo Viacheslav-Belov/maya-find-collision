@@ -91,6 +91,8 @@ MStatus findCollision::doIt( const MArgList& args ) {
         );
         if (intersects) {
             cout << hit_point << endl;
+            // TODO: return the closest intersection
+            // from all 3 directions instead of the first.
             return status;
         };
     };
