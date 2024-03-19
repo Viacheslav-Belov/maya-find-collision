@@ -22,6 +22,5 @@ To run the plug-in:
 2. Select a `mesh`.
 3. Shift + select a `locator` (or any other transform object). The plug-in will check if & where the `locator` collides with the `mesh`.
 4. Run the `FindCollision` MEL command in Maya.
-5. Check the `Output Window` (can be found by clicking the top bar's `Windows` -> `Output Window`)
-	1. If the `locator` collides with the `mesh`, the coordinates of this collision will be shown.
-	2. If the `locator` doesn't collide with the `mesh`, no coordinates will be displayed.
+   * If there is a collision, a new `locator` called "intersection_point" will be created at the point of collision.
+   * If there is no collision, a message will be printed in the `Output Window`.
