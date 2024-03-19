@@ -31,12 +31,12 @@ def find_closest_collision_point() -> om.MFloatPoint | None:
     )
     intersections = []
     for ray_direction in ray_directions:
-        intersection = mesh.anyIntersection(
+        intersection = mesh.closestIntersection(
             ray_source_float_point,  # raySource
-            om.MFloatVector(*ray_direction),  #rayDirection
+            om.MFloatVector(*ray_direction),  # rayDirection
             om.MSpace.kWorld,  # space
             10000,  # maxParam
-            False,  # testBothDirections
+            True,  # testBothDirections
             idsSorted=False,
             accelParams=mesh.autoUniformGridParams(),
             tolerance=0.0001,
