@@ -3,6 +3,8 @@
 #include <maya/MString.h>
 #include <maya/MArgList.h>
 
+#include <maya/MObject.h>
+#include <maya/MFnTransform.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MGlobal.h>
 #include <maya/MItSelectionList.h>
@@ -12,8 +14,13 @@
 #include <maya/MVector.h>
 #include <maya/MSelectionList.h>
 #include <maya/MMatrix.h>
+#include <maya/MFloatPoint.h>
+#include <maya/MFloatPointArray.h>
+
+#include <maya/MDagModifier.h>
 
 #include <maya/miostream.h>
+
 
 class findCollision : public MPxCommand
 {
@@ -27,7 +34,7 @@ void* findCollision::creator() {
 }
 
 MStatus initializePlugin( MObject obj ) {
-    MFnPlugin plugin( obj, "Viacheslav", "1.0", "Any" );
+    MFnPlugin plugin( obj, "ViacheslavBelov", "1.0", "Any" );
     plugin.registerCommand( "FindCollision", findCollision::creator );
     return MS::kSuccess;
 }
@@ -37,6 +44,47 @@ MStatus uninitializePlugin( MObject obj ) {
     plugin.deregisterCommand( "FindCollision" );
     return MS::kSuccess;
 }
+
+
+MFloatPoint find_closest_point(MFloatPointArray points, MFloatPoint origin_point) {
+    MFloatPoint c_point = points[0];
+    float min_length = 0;
+
+    int points_length = points.length();
+    for (int i = 1; i < points_length; i++)
+        if (points[i].distanceTo(origin_point) < min_length)
+            c_point = points[i];
+
+    return c_point;
+};
+
+
+MObject create_locator(float position_x, float position_y, float position_z) {
+
+    MStatus status = MS::kSuccess;
+    MObject locatorObj = MObject::kNullObj;
+    MObject parent = MObject::kNullObj;
+    
+    MString name("intersection_point");
+    MDagModifier modifier;
+    locatorObj = modifier.createNode("locator", parent, &status);
+    status = modifier.doIt();
+    if (status != MS::kSuccess)
+    {
+        MString theError("Failed to create locator node ");
+        theError += name;
+        cout << theError << endl;
+        return locatorObj;
+    }
+
+    MFnDagNode fnLocator(locatorObj);
+    fnLocator.setName(name);
+    MFnTransform transform(locatorObj);
+    transform.setTranslation(MVector(position_x, position_y, position_z), MSpace::kTransform);
+
+    return locatorObj;
+};
+
 
 MStatus findCollision::doIt( const MArgList& args ) {
     MStatus status = MS::kSuccess;
@@ -63,10 +111,14 @@ MStatus findCollision::doIt( const MArgList& args ) {
     float hit_ray_param, hit_bary_1, hit_bary_2;
     int hit_face, hit_triangle;
 
+    MFloatPoint closest_point;
+    MFloatPointArray hit_points;
+    hit_points.setLength(3);
+
     float ray_directions[3][3] = {
         {1.0, 0.0, 0.0},
         {0.0, 1.0, 0.0},
-        {1.0, 0.0, 1.0}
+        {0.0, 0.0, 1.0}
     };
     bool intersects;
     for (int i=0; i < 3; i++) {
@@ -78,7 +130,7 @@ MStatus findCollision::doIt( const MArgList& args ) {
             false,
             MSpace::kWorld,
             9999,
-            false,
+            true,
             &accel_params,
             hit_point,
             &hit_ray_param,
@@ -89,13 +141,17 @@ MStatus findCollision::doIt( const MArgList& args ) {
             (float)1e-6,
             &status
         );
-        if (intersects) {
-            cout << hit_point << endl;
-            // TODO: return the closest intersection
-            // from all 3 directions instead of the first.
-            return status;
-        };
+        hit_points[i] = hit_point;
     };
 
+    if (intersects) {
+        closest_point = find_closest_point(hit_points, ray_source);
+        cout << closest_point << endl;
+        create_locator(closest_point.x, closest_point.y, closest_point.z);
+    } else {
+        cout << "No collisions found" << endl;
+    };
+    
     return status;
-}
+
+};
