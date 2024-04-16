@@ -1,33 +1,6 @@
 #include <stdio.h>
+#include "findCollision.h"
 
-#include <maya/MString.h>
-#include <maya/MArgList.h>
-
-#include <maya/MObject.h>
-#include <maya/MFnTransform.h>
-#include <maya/MFnPlugin.h>
-#include <maya/MGlobal.h>
-#include <maya/MItSelectionList.h>
-#include <maya/MPxCommand.h>
-#include <maya/MFnMesh.h>
-#include <maya/MDagPath.h>
-#include <maya/MVector.h>
-#include <maya/MSelectionList.h>
-#include <maya/MMatrix.h>
-#include <maya/MFloatPoint.h>
-#include <maya/MFloatPointArray.h>
-
-#include <maya/MDagModifier.h>
-
-#include <maya/miostream.h>
-
-
-class findCollision : public MPxCommand
-{
-    public:
-        MStatus doIt( const MArgList& args );
-        static void* creator();
-};
 
 void* findCollision::creator() {
     return new findCollision;
@@ -47,15 +20,22 @@ MStatus uninitializePlugin( MObject obj ) {
 
 
 MFloatPoint find_closest_point(MFloatPointArray points, MFloatPoint origin_point) {
-    MFloatPoint c_point = points[0];
-    float min_length = 0;
+    MFloatPoint point;
+    MFloatPoint closest_point = points[0];
+    double distance;
+    double min_distance = closest_point.distanceTo(origin_point);
 
     int points_length = points.length();
-    for (int i = 1; i < points_length; i++)
-        if (points[i].distanceTo(origin_point) < min_length)
-            c_point = points[i];
+    for (int i = 1; i < points_length; i++) {
+        point = points[i];
+        distance = point.distanceTo(origin_point);
+        if (distance < min_distance) {
+            min_distance = distance;
+            closest_point = point;
+        }
+    };
 
-    return c_point;
+    return closest_point;
 };
 
 
@@ -69,8 +49,7 @@ MObject create_locator(float position_x, float position_y, float position_z) {
     MDagModifier modifier;
     locatorObj = modifier.createNode("locator", parent, &status);
     status = modifier.doIt();
-    if (status != MS::kSuccess)
-    {
+    if (status != MS::kSuccess) {
         MString theError("Failed to create locator node ");
         theError += name;
         cout << theError << endl;
@@ -104,7 +83,6 @@ MStatus findCollision::doIt( const MArgList& args ) {
 
     MVector ray_source;
     ray_source = m_matrix.translation(MSpace::kWorld);
-    MFloatPoint ray_source_float_point(ray_source);
     
     MFloatPoint hit_point;
     MMeshIsectAccelParams accel_params = mesh.autoUniformGridParams();
@@ -146,11 +124,11 @@ MStatus findCollision::doIt( const MArgList& args ) {
 
     if (intersects) {
         closest_point = find_closest_point(hit_points, ray_source);
-        cout << closest_point << endl;
+        cout << "Closest point: " << closest_point << endl;
         create_locator(closest_point.x, closest_point.y, closest_point.z);
     } else {
         cout << "No collisions found" << endl;
-    };
+    }
     
     return status;
 

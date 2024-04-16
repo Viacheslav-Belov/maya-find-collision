@@ -7,6 +7,7 @@ set(PROJECT_NAME findCollision)
 project(${PROJECT_NAME})
 
 set(SOURCE_FILES
+    findCollision.h
     findCollision.cpp
 )
 
