@@ -18,7 +18,7 @@ To build it:
 If all goes well and the build returns a 0 status, a `findCollision.mll` plug-in file will be built.
 
 To run the plug-in:
-1. Load the `.mll` file.
+1. Load the `findCollision.mll` file.
 2. Select a `mesh`.
 3. Shift + select a `locator` (or any other transform object). The plug-in will check if & where the `locator` collides with the `mesh`.
 4. Run the `FindCollision` MEL command in Maya.
